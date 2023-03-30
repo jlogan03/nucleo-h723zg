@@ -18,7 +18,7 @@ use defmt::info;
 use panic_probe as _;
 
 use core::fmt::Write;
-use stm32h7xx_hal::{prelude::*, serial::Error};
+use stm32h7xx_hal::prelude::*;
 
 use cortex_m_rt::entry;
 
@@ -37,27 +37,18 @@ fn main() -> ! {
 
     // Freeze the configuration of all the clocks in the system and
     // retrieve the Core Clock Distribution and Reset (CCDR) object
-    // let rcc = rcc.sys_ck(400.mhz()).use_hse(8.mhz()).bypass_hse();
     let ccdr = rcc.freeze(pwrcfg, &dp.SYSCFG);
 
     // Acquire the GPIOB peripheral
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-
-    // Configure gpio B pin 7 as a push-pull output.
-    // let mut ld2 = gpiob.pb7.into_push_pull_output();
-    // Configure gpio B pin 14 as a push-pull output.
-    // let mut ld3 = gpiob.pb14.into_push_pull_output();
-
-    // Acquire the GPIOD peripheral
-    // let gpiod = dp.GPIOD.split(ccdr.peripheral.GPIOD);
 
     // initialize serial
     let tx = gpiob.pb6.into_alternate();
     let rx = gpiob.pb7.into_alternate();
 
     let serial = dp
-        .USART3
-        .serial((tx, rx), 115200.bps(), ccdr.peripheral.USART3, &ccdr.clocks)
+        .USART1
+        .serial((tx, rx), 115200.bps(), ccdr.peripheral.USART1, &ccdr.clocks)
         .unwrap();
 
     let (mut tx, mut rx) = serial.split();
@@ -73,18 +64,7 @@ fn main() -> ! {
                 tx.write(c).unwrap();
             }
             Err(nb::Error::WouldBlock) => {}
-            Err(nb::Error::Other(err)) => {
-                // match err {
-                //     Error::Framing => {
-                //         ld2.set_high(); // blue
-                //         panic!("framing error");
-                //     }
-                //     e => {
-                //         ld3.set_high(); // red
-                //         panic!("other error {:?}", e);
-                //     }
-                // }
-            }
+            Err(nb::Error::Other(_)) => {}
         }
     }
 }
