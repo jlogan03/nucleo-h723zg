@@ -18,7 +18,7 @@ use defmt::info;
 use panic_probe as _;
 
 use core::fmt::Write;
-use stm32h7xx_hal::prelude::*;
+use stm32h7xx_hal::{block, prelude::*, timer::Timer};
 
 use cortex_m_rt::entry;
 
@@ -39,32 +39,42 @@ fn main() -> ! {
     // retrieve the Core Clock Distribution and Reset (CCDR) object
     let ccdr = rcc.freeze(pwrcfg, &dp.SYSCFG);
 
-    // Acquire the GPIOB peripheral
-    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+    // Acquire the GPIOE peripheral
+    // then configure gpio E pin 1 as a push-pull output to drive the LED
+    let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
+    let mut led = gpioe.pe1.into_push_pull_output();
 
-    // initialize serial
-    let tx = gpiob.pb6.into_alternate();
-    let rx = gpiob.pb7.into_alternate();
+    // Acquire the GPIOD peripheral
+    // then use it to initialize serial
+    let gpiod = dp.GPIOD.split(ccdr.peripheral.GPIOD);
+    let tx = gpiod.pd8.into_alternate();
+    let rx = gpiod.pd9.into_alternate();
 
     let serial = dp
-        .USART1
-        .serial((tx, rx), 115200.bps(), ccdr.peripheral.USART1, &ccdr.clocks)
+        .USART3
+        .serial((tx, rx), 115200.bps(), ccdr.peripheral.USART3, &ccdr.clocks)
         .unwrap();
 
     let (mut tx, mut rx) = serial.split();
+
+    // Configure the timer to trigger an update every second
+    let mut timer = Timer::tim1(dp.TIM1, ccdr.peripheral.TIM1, &ccdr.clocks);
+    timer.start(1.Hz());
 
     // core::fmt::Write is implemented for tx.
     writeln!(tx, "Hello World\r").unwrap();
     writeln!(tx, "Entering echo mode..\r").unwrap();
     info!("Entering main loop");
+    let mut led_state: bool = true;
     loop {
         // Echo what is received on the serial link.
-        match rx.read() {
-            Ok(c) => {
-                tx.write(c).unwrap();
-            }
-            Err(nb::Error::WouldBlock) => {}
-            Err(nb::Error::Other(_)) => {}
+        while let Ok(c) = rx.read() {
+            tx.write(c).unwrap();
         }
+
+        // Toggle the LED and wait until the next cycle
+        led_state = !led_state;
+        led.set_state(led_state.into());
+        block!(timer.wait()).unwrap();
     }
 }
