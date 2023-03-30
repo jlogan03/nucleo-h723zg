@@ -31,7 +31,7 @@ sh flash.sh blinky
 replacing "blinky" with another example file as needed.
 
 For some alternative approaches to flashing and debugging, 
-see https://github.com/astraw/nucleo-h743zi .s
+see https://github.com/astraw/nucleo-h743zi .
 
 ## License
 

@@ -1,8 +1,5 @@
 //! Blinks an LED
-//!
-//! This assumes that LD1 (green) is connected to pb0 and LD3 (red) is connected
-//! to pb14. This assumption is true for the nucleo-h743zi and nucleo-h743zi2
-//! boards.
+
 
 #![no_std]
 #![no_main]
