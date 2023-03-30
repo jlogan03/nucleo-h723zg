@@ -34,14 +34,14 @@ fn main() -> ! {
     let ccdr = rcc.freeze(pwrcfg, &dp.SYSCFG);
 
     // Acquire the GPIOB peripheral
-    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+    let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
 
     // Configure gpio B pin 0 as a push-pull output.
-    let mut ld1 = gpiob.pb0.into_push_pull_output();
+    let mut ld1 = gpioe.pe1.into_push_pull_output();
 
     // Configure gpio B pin 14 as a push-pull output.
-    let mut ld3 = gpiob.pb14.into_push_pull_output();
-    ld3.set_high();
+    // let mut ld3 = gpiob.pb14.into_push_pull_output();
+    // ld3.set_high();
 
     // Configure the timer to trigger an update every second
     let mut timer = Timer::tim1(dp.TIM1, ccdr.peripheral.TIM1, &ccdr.clocks);

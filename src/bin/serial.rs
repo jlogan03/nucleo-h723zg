@@ -44,16 +44,16 @@ fn main() -> ! {
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
 
     // Configure gpio B pin 7 as a push-pull output.
-    let mut ld2 = gpiob.pb7.into_push_pull_output();
+    // let mut ld2 = gpiob.pb7.into_push_pull_output();
     // Configure gpio B pin 14 as a push-pull output.
-    let mut ld3 = gpiob.pb14.into_push_pull_output();
+    // let mut ld3 = gpiob.pb14.into_push_pull_output();
 
     // Acquire the GPIOD peripheral
-    let gpiod = dp.GPIOD.split(ccdr.peripheral.GPIOD);
+    // let gpiod = dp.GPIOD.split(ccdr.peripheral.GPIOD);
 
     // initialize serial
-    let tx = gpiod.pd8.into_alternate();
-    let rx = gpiod.pd9.into_alternate();
+    let tx = gpiob.pb6.into_alternate();
+    let rx = gpiob.pb7.into_alternate();
 
     let serial = dp
         .USART3
@@ -74,16 +74,16 @@ fn main() -> ! {
             }
             Err(nb::Error::WouldBlock) => {}
             Err(nb::Error::Other(err)) => {
-                match err {
-                    Error::Framing => {
-                        ld2.set_high(); // blue
-                        panic!("framing error");
-                    }
-                    e => {
-                        ld3.set_high(); // red
-                        panic!("other error {:?}", e);
-                    }
-                }
+                // match err {
+                //     Error::Framing => {
+                //         ld2.set_high(); // blue
+                //         panic!("framing error");
+                //     }
+                //     e => {
+                //         ld3.set_high(); // red
+                //         panic!("other error {:?}", e);
+                //     }
+                // }
             }
         }
     }
