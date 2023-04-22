@@ -1,10 +1,6 @@
 //! Echo bytes over serial
 //!
-//! This assumes that serial TX is PD8 and RX is PD9. This is true for the
-//! nucleo-h723zg board in which these are connected to the ST-LINK virtual COM
-//! port.
-//!
-//! Connect the STM32H723ZG board via the USB connector and check the name of
+//! Connect the board via the USB connector and check the name of
 //! the COM port on Windows or the /dev/ACMx port on Unix systems. Open a serial terminal
 //! and connect to that serial port with a baudrate of 115200, for example with
 //! `picocom` or Putty.
@@ -12,16 +8,9 @@
 #![no_std]
 #![no_main]
 
-// use defmt_rtt as _; // global logger
-
-// use defmt::info;
-// use panic_probe as _;
-
 use core::fmt::Write;
 use stm32h7xx_hal::{block, prelude::*};
-
 use cortex_m_rt::entry;
-
 use nucleo_h723zg::Board;
 
 #[entry]

@@ -5,9 +5,7 @@
 #![no_main]
 
 use stm32h7xx_hal::{block, prelude::*, timer::Timer};
-
 use cortex_m_rt::entry;
-
 use nucleo_h723zg::Board;
 
 #[entry]
