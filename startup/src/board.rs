@@ -1,6 +1,6 @@
 use core::panic::PanicInfo;
-use stm32h7xx_hal::{device::Peripherals, prelude::*};
 use stm32h7xx_hal::stm32::*;
+use stm32h7xx_hal::{device::Peripherals, prelude::*};
 
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
@@ -152,7 +152,7 @@ pub struct Board {
     #[doc = "PF"]
     pub PF: PF,
     // #[doc = "PWR"]
-    // pub PWR: PWR,
+    // pub PWR: PWR,  // Consumed during startup
     #[doc = "RAMECC1"]
     pub RAMECC1: RAMECC1,
     #[doc = "RAMECC2"]
@@ -268,6 +268,8 @@ pub struct Board {
 }
 
 impl Board {
+
+    /// Do clock and power setup & return the remining device peripherals
     pub fn new() -> Self {
         // Get access to the device specific peripherals from the peripheral access crate
         let dp: Peripherals = stm32h7xx_hal::stm32::Peripherals::take().unwrap();
@@ -409,5 +411,12 @@ impl Board {
             ETHERNET_DMA: dp.ETHERNET_DMA,
             ETHERNET_MTL: dp.ETHERNET_MTL,
         }
+    }
+
+    /// A panic-never version of new() for use in compilation-only testing that verifies
+    /// the absense of panic branches in programs that require this struct
+    #[cfg(feature="test")]
+    pub fn fake() -> &'static mut Self {
+        unsafe { &mut *(0 as *mut Self) }
     }
 }
