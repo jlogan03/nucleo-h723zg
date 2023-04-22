@@ -3,15 +3,14 @@ on: [push]
 name: build
 
 jobs:
-  build:
-    name: build examples
+  build:  # Build with startup
+    name: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          # Build for Cortex-M7F with FPU support
           target: thumbv7em-none-eabihf
           override: true
       - uses: actions-rs/cargo@v1
@@ -19,3 +18,18 @@ jobs:
           use-cross: true
           command: build
           args: --target thumbv7em-none-eabihf
+  check_panic_never:  # Bypass startup and check main loops for panic branches
+    name: build_panic_never
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: thumbv7em-none-eabihf
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --target thumbv7em-none-eabihf --features=test
