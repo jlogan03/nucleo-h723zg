@@ -15,16 +15,16 @@ cortex-m = { version = "0.7.7", features = ["critical-section-single-core"]}
 embedded-hal = "0.2.7"
 nb = "1.1.0"
 stm32h7xx-hal = { version="0.14.0", features=["stm32h735"] }
-defmt = "0.3.4"
-defmt-rtt = "0.4.0"
-panic-probe = { version = "0.3.1", features = ["print-defmt"] }
 cortex-m-rtic = "1.1.4"
 panic-never = '0.1.0'
+nucleo-h723zg-startup = { path = "../startup" }
 
 [profile.dev]
 debug = true
+# panic = "abort"
 
 [profile.release]
 debug = false
 lto = true
 opt-level = "s"
+# panic = "abort"

@@ -12,10 +12,10 @@
 #![no_std]
 #![no_main]
 
-use defmt_rtt as _; // global logger
+// use defmt_rtt as _; // global logger
 
-use defmt::info;
-use panic_probe as _;
+// use defmt::info;
+// use panic_probe as _;
 
 use core::fmt::Write;
 use stm32h7xx_hal::{block, prelude::*, timer::Timer};
@@ -24,7 +24,7 @@ use cortex_m_rt::entry;
 
 #[entry]
 fn main() -> ! {
-    info!("Starting serial");
+    // info!("Starting serial");
 
     // Get access to the device specific peripherals from the peripheral access crate
     let dp = stm32h7xx_hal::stm32::Peripherals::take().unwrap();
@@ -64,7 +64,7 @@ fn main() -> ! {
     // core::fmt::Write is implemented for tx.
     writeln!(tx, "Hello World\r").unwrap();
     writeln!(tx, "Entering echo mode..\r").unwrap();
-    info!("Entering main loop");
+    // info!("Entering main loop");
     let mut led_state: bool = true;
     loop {
         // Echo what is received on the serial link.

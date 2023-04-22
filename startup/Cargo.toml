@@ -1,0 +1,29 @@
+[package]
+name = "nucleo-h723zg-startup"
+version = "0.1.0"
+authors = ["James Logan <jlogan03@gmail.com>"]
+categories = ["embedded", "hardware-support", "no-std"]
+description = "Example programs for nucleo-H723zg board"
+keywords = ["arm", "cortex-m", "stm32h7xx", "hal"]
+license = "0BSD"
+repository = "https://github.com/jlogan03/nucleo-h723zg"
+edition = "2021"
+
+[dependencies]
+cortex-m-rt = "0.7.3"
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"]}
+embedded-hal = "0.2.7"
+nb = "1.1.0"
+stm32h7xx-hal = { version="0.14.0", features=["stm32h735"] }
+cortex-m-rtic = "1.1.4"
+panic-never = '0.1.0'
+
+[profile.dev]
+debug = true
+panic = "abort"
+
+[profile.release]
+debug = false
+lto = true
+opt-level = "s"
+panic = "abort"
