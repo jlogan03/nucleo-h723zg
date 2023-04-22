@@ -1,7 +1,16 @@
+//! Panic-free parts of the program
+
+#![no_std]
+
+
 use core::panic::PanicInfo;
 use stm32h7xx_hal::stm32::*;
 use stm32h7xx_hal::{device::Peripherals, prelude::*};
 
+#[cfg(feature="test")]
+use panic_never as _;
+
+#[cfg(not(feature="test"))]
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
     loop {}
@@ -270,6 +279,7 @@ pub struct Board {
 impl Board {
 
     /// Do clock and power setup & return the remining device peripherals
+    #[cfg(not(feature="test"))]
     pub fn new() -> Self {
         // Get access to the device specific peripherals from the peripheral access crate
         let dp: Peripherals = stm32h7xx_hal::stm32::Peripherals::take().unwrap();
@@ -416,7 +426,8 @@ impl Board {
     /// A panic-never version of new() for use in compilation-only testing that verifies
     /// the absense of panic branches in programs that require this struct
     #[cfg(feature="test")]
-    pub fn fake() -> &'static mut Self {
-        unsafe { &mut *(0 as *mut Self) }
+    pub fn new() -> Self {
+        use core::mem::zeroed;
+        unsafe { zeroed() }
     }
 }

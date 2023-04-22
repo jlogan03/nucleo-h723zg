@@ -235,20 +235,6 @@ dependencies = [
  "cortex-m-rtic",
  "embedded-hal",
  "nb 1.1.0",
- "nucleo-h723zg-startup",
- "panic-never",
- "stm32h7xx-hal",
-]
-
-[[package]]
-name = "nucleo-h723zg-startup"
-version = "0.1.0"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "cortex-m-rtic",
- "embedded-hal",
- "nb 1.1.0",
  "panic-never",
  "stm32h7xx-hal",
 ]
