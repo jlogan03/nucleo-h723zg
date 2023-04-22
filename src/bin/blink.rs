@@ -4,7 +4,7 @@
 #![no_std]
 #![no_main]
 
-use stm32h7xx_hal::{block, prelude::*, timer::Timer};
+use stm32h7xx_hal::{block, prelude::*};
 use cortex_m_rt::entry;
 use nucleo_h723zg::Board;
 

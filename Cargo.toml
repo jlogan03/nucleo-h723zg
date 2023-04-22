@@ -27,8 +27,10 @@ test = ["panic-never"]
 debug = true
 lto = true
 opt-level = "s"
+codegen-units = 1
 
 [profile.release]
 debug = false
 lto = true
 opt-level = "s"
+codegen-units = 1

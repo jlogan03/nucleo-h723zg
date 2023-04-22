@@ -1,12 +1,14 @@
 //! Board initialization & one-time configuration.
 //! Board::new() contains all the parts of the program that can generate panic branches.
+//! When the `test` feature flag is set, the Board::new
 
 #![no_std]
 
-
+#[cfg(not(feature="test"))]
 use core::panic::PanicInfo;
+
 use stm32h7xx_hal::stm32::*;
-use stm32h7xx_hal::{device::Peripherals, prelude::*, serial::{Rx, Tx}, timer::Timer};
+use stm32h7xx_hal::{serial::{Rx, Tx}, timer::Timer};
 
 #[cfg(feature="test")]
 use panic_never as _;
