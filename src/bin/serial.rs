@@ -18,7 +18,7 @@
 // use panic_probe as _;
 
 use core::fmt::Write;
-use stm32h7xx_hal::{block, prelude::*, timer::Timer};
+use stm32h7xx_hal::{block, prelude::*};
 
 use cortex_m_rt::entry;
 
@@ -27,43 +27,26 @@ use nucleo_h723zg::Board;
 #[entry]
 fn main() -> ! {
 
-    let board = Board::new();
+    let mut board = Board::new();
 
-    // Acquire the GPIOE peripheral
-    // then configure gpio E pin 1 as a push-pull output to drive the LED
-    let gpioe = board.GPIOE.split(board.ccdr.peripheral.GPIOE);
-    let mut led = gpioe.pe1.into_push_pull_output();
-
-    // Acquire the GPIOD peripheral
-    // then use it to initialize serial
-    let gpiod = board.GPIOD.split(board.ccdr.peripheral.GPIOD);
-    // let tx = gpiod.pd8.into_alternate();
-    // let rx = gpiod.pd9.into_alternate();
-
-    // let serial = board
-    //     .USART3
-    //     .serial((tx, rx), 115200.bps(), board.ccdr.peripheral.USART3, &board.ccdr.clocks)
-    //     .unwrap_or_else(|_| loop {});
-
-    // let (mut tx, mut rx) = serial.split();
+    let (mut rx, mut tx) = (board.usart3_rx, board.usart3_tx);
 
     // Configure the timer to trigger an update every second
-    let mut timer = Timer::tim1(board.TIM1, board.ccdr.peripheral.TIM1, &board.ccdr.clocks);
-    timer.start(1.Hz());
+    board.timer.start(1.Hz());
 
     // core::fmt::Write is implemented for tx.
-    // let _ = writeln!(tx, "Hello World\r");
-    // let _ = writeln!(tx, "Entering echo mode..\r");
+    let _ = writeln!(tx, "Hello World\r");
+    let _ = writeln!(tx, "Entering echo mode..\r");
     let mut led_state: bool = true;
     loop {
         // Echo what is received on the serial link.
-        // while let Ok(c) = rx.read() {
-        //     let _ = tx.write(c);
-        // }
+        while let Ok(c) = rx.read() {
+            let _ = tx.write(c);
+        }
 
         // Toggle the LED and wait until the next cycle
         led_state = !led_state;
-        led.set_state(led_state.into());
-        let _ = block!(timer.wait());
+        board.led.set_state(led_state.into());
+        let _ = block!(board.timer.wait());
     }
 }

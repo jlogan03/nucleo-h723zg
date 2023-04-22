@@ -1,11 +1,12 @@
-//! Panic-free parts of the program
+//! Board initialization & one-time configuration.
+//! Board::new() contains all the parts of the program that can generate panic branches.
 
 #![no_std]
 
 
 use core::panic::PanicInfo;
 use stm32h7xx_hal::stm32::*;
-use stm32h7xx_hal::{device::Peripherals, prelude::*};
+use stm32h7xx_hal::{device::Peripherals, prelude::*, serial::{Rx, Tx}, timer::Timer};
 
 #[cfg(feature="test")]
 use panic_never as _;
@@ -18,9 +19,12 @@ fn panic(_: &PanicInfo) -> ! {
 
 #[allow(non_snake_case)]
 pub struct Board {
-    /// Clock control and distribution
-    /// returned after freezing clock config during startup
-    pub ccdr: stm32h7xx_hal::rcc::Ccdr,
+
+    pub usart3_rx: Rx<USART3>,
+    pub usart3_tx: Tx<USART3>,
+
+    pub timer: Timer<TIM1>,
+    pub led: stm32h7xx_hal::gpio::Pin<'E', 1, stm32h7xx_hal::gpio::Output>,
 
     #[doc = "AC"]
     pub AC: AC,
@@ -90,10 +94,10 @@ pub struct Board {
     pub GPIOB: GPIOB,
     #[doc = "GPIOC"]
     pub GPIOC: GPIOC,
-    #[doc = "GPIOD"]
-    pub GPIOD: GPIOD,
-    #[doc = "GPIOE"]
-    pub GPIOE: GPIOE,
+    // #[doc = "GPIOD"]
+    // pub GPIOD: GPIOD,  // Board-specific; consumed during startup
+    // #[doc = "GPIOE"]
+    // pub GPIOE: GPIOE,  // Board-specific; consumed during startup
     #[doc = "GPIOF"]
     pub GPIOF: GPIOF,
     #[doc = "GPIOG"]
@@ -204,8 +208,8 @@ pub struct Board {
     pub SWPMI: SWPMI,
     #[doc = "SYSCFG"]
     pub SYSCFG: SYSCFG,
-    #[doc = "TIM1"]
-    pub TIM1: TIM1,
+    // #[doc = "TIM1"]
+    // pub TIM1: TIM1, // Implementation-specific; consumed during startup
     #[doc = "TIM2"]
     pub TIM2: TIM2,
     #[doc = "TIM3"]
@@ -236,8 +240,8 @@ pub struct Board {
     pub USART1: USART1,
     #[doc = "USART2"]
     pub USART2: USART2,
-    #[doc = "USART3"]
-    pub USART3: USART3,
+    // #[doc = "USART3"]
+    // pub USART3: USART3,  // Board-specific; consumed during startup
     #[doc = "UART4"]
     pub UART4: UART4,
     #[doc = "UART5"]
@@ -278,11 +282,22 @@ pub struct Board {
 
 impl Board {
 
-    /// Do clock and power setup & return the remining device peripherals
+    /// Do clock and power setup, and any other one-time configuration
+    /// then return a struct with the remining device peripherals
+    /// and any configured usages of them like serial comms
+    /// 
+    /// Panics
+    /// * If a valid clock configuration is not found
+    /// * If serial comm initialization fails
     #[cfg(not(feature="test"))]
     pub fn new() -> Self {
+
         // Get access to the device specific peripherals from the peripheral access crate
         let dp: Peripherals = stm32h7xx_hal::stm32::Peripherals::take().unwrap();
+
+        // 
+        // CLOCK SETUP
+        //
 
         // Take ownership over the RCC devices and convert them into the corresponding HAL structs
         let rcc: stm32h7xx_hal::rcc::Rcc = dp.RCC.constrain();
@@ -294,8 +309,43 @@ impl Board {
         // retrieve the Core Clock Distribution and Reset (CCDR) object
         let ccdr: stm32h7xx_hal::rcc::Ccdr = rcc.freeze(pwrcfg, &dp.SYSCFG);
 
+        // Set up a single general-purpose timer
+        let timer: Timer<TIM1> = Timer::tim1(dp.TIM1, ccdr.peripheral.TIM1, &ccdr.clocks);
+
+        //
+        // SERIAL COMMS
+        //
+
+        // Acquire the GPIOD peripheral
+        // then use it to initialize serial
+        let gpiod: stm32h7xx_hal::gpio::gpiod::Parts = dp.GPIOD.split(ccdr.peripheral.GPIOD);
+        let tx = gpiod.pd8.into_alternate();
+        let rx = gpiod.pd9.into_alternate();
+
+        let serial: stm32h7xx_hal::serial::Serial<USART3> = dp
+            .USART3
+            .serial((tx, rx), 115200.bps(), ccdr.peripheral.USART3, &ccdr.clocks)
+            .unwrap();
+
+        let (tx, rx) = serial.split();
+
+        //
+        // USER LED
+        //
+
+        // Acquire the GPIOE peripheral
+        // then configure gpio E pin 1 as a push-pull output to drive the LED
+        let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
+        let led: stm32h7xx_hal::gpio::Pin<'E', 1, stm32h7xx_hal::gpio::Output> = gpioe.pe1.into_push_pull_output();
+
         Board {
-            ccdr: ccdr,
+            // Configured utilities
+            usart3_rx: rx,
+            usart3_tx: tx,
+            timer: timer,
+            led: led,
+
+            // Remaining peripherals
             AC: dp.AC,
             ADC1: dp.ADC1,
             ADC3: dp.ADC3,
@@ -331,8 +381,8 @@ impl Board {
             GPIOA: dp.GPIOA,
             GPIOB: dp.GPIOB,
             GPIOC: dp.GPIOC,
-            GPIOD: dp.GPIOD,
-            GPIOE: dp.GPIOE,
+            // GPIOD: dp.GPIOD,
+            // GPIOE: dp.GPIOE,
             GPIOF: dp.GPIOF,
             GPIOG: dp.GPIOG,
             GPIOH: dp.GPIOH,
@@ -386,7 +436,7 @@ impl Board {
             STK: dp.STK,
             SWPMI: dp.SWPMI,
             SYSCFG: dp.SYSCFG,
-            TIM1: dp.TIM1,
+            // TIM1: dp.TIM1,
             TIM12: dp.TIM12,
             TIM2: dp.TIM2,
             TIM3: dp.TIM3,
@@ -404,7 +454,7 @@ impl Board {
             TIM24: dp.TIM24,
             USART1: dp.USART1,
             USART2: dp.USART2,
-            USART3: dp.USART3,
+            // USART3: dp.USART3,
             UART4: dp.UART4,
             UART5: dp.UART5,
             USART6: dp.USART6,
@@ -423,8 +473,9 @@ impl Board {
         }
     }
 
-    /// A panic-never version of new() for use in compilation-only testing that verifies
-    /// the absense of panic branches in programs that require this struct
+    /// A non-functioning but panic-never version of new() for use in compilation-only testing that verifies
+    /// the absense of panic branches in programs that require this struct.
+    /// This should never be flashed to a chip!
     #[cfg(feature="test")]
     pub fn new() -> Self {
         use core::mem::zeroed;
