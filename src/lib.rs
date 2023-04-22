@@ -8,7 +8,7 @@
 use core::panic::PanicInfo;
 
 use stm32h7xx_hal::stm32::*;
-use stm32h7xx_hal::{serial::{Rx, Tx}, timer::Timer};
+use stm32h7xx_hal::{prelude::*, serial::{Rx, Tx}, timer::Timer};
 
 #[cfg(feature="test")]
 use panic_never as _;
@@ -22,12 +22,13 @@ fn panic(_: &PanicInfo) -> ! {
 #[allow(non_snake_case)]
 pub struct Board {
 
+    // Configured utilities
     pub usart3_rx: Rx<USART3>,
     pub usart3_tx: Tx<USART3>,
-
     pub timer: Timer<TIM1>,
     pub led: stm32h7xx_hal::gpio::Pin<'E', 1, stm32h7xx_hal::gpio::Output>,
 
+    // Remaining device peripherals
     #[doc = "AC"]
     pub AC: AC,
     #[doc = "ADC1"]
