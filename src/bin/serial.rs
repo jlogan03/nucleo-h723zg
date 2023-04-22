@@ -22,59 +22,48 @@ use stm32h7xx_hal::{block, prelude::*, timer::Timer};
 
 use cortex_m_rt::entry;
 
+use nucleo_h723zg::Board;
+
 #[entry]
 fn main() -> ! {
-    // info!("Starting serial");
 
-    // Get access to the device specific peripherals from the peripheral access crate
-    let dp = stm32h7xx_hal::stm32::Peripherals::take().unwrap();
-
-    // Take ownership over the RCC devices and convert them into the corresponding HAL structs
-    let rcc = dp.RCC.constrain();
-
-    let pwr = dp.PWR.constrain();
-    let pwrcfg = pwr.freeze();
-
-    // Freeze the configuration of all the clocks in the system and
-    // retrieve the Core Clock Distribution and Reset (CCDR) object
-    let ccdr = rcc.freeze(pwrcfg, &dp.SYSCFG);
+    let board = Board::new();
 
     // Acquire the GPIOE peripheral
     // then configure gpio E pin 1 as a push-pull output to drive the LED
-    let gpioe = dp.GPIOE.split(ccdr.peripheral.GPIOE);
+    let gpioe = board.GPIOE.split(board.ccdr.peripheral.GPIOE);
     let mut led = gpioe.pe1.into_push_pull_output();
 
     // Acquire the GPIOD peripheral
     // then use it to initialize serial
-    let gpiod = dp.GPIOD.split(ccdr.peripheral.GPIOD);
-    let tx = gpiod.pd8.into_alternate();
-    let rx = gpiod.pd9.into_alternate();
+    let gpiod = board.GPIOD.split(board.ccdr.peripheral.GPIOD);
+    // let tx = gpiod.pd8.into_alternate();
+    // let rx = gpiod.pd9.into_alternate();
 
-    let serial = dp
-        .USART3
-        .serial((tx, rx), 115200.bps(), ccdr.peripheral.USART3, &ccdr.clocks)
-        .unwrap();
+    // let serial = board
+    //     .USART3
+    //     .serial((tx, rx), 115200.bps(), board.ccdr.peripheral.USART3, &board.ccdr.clocks)
+    //     .unwrap_or_else(|_| loop {});
 
-    let (mut tx, mut rx) = serial.split();
+    // let (mut tx, mut rx) = serial.split();
 
     // Configure the timer to trigger an update every second
-    let mut timer = Timer::tim1(dp.TIM1, ccdr.peripheral.TIM1, &ccdr.clocks);
+    let mut timer = Timer::tim1(board.TIM1, board.ccdr.peripheral.TIM1, &board.ccdr.clocks);
     timer.start(1.Hz());
 
     // core::fmt::Write is implemented for tx.
-    writeln!(tx, "Hello World\r").unwrap();
-    writeln!(tx, "Entering echo mode..\r").unwrap();
-    // info!("Entering main loop");
+    // let _ = writeln!(tx, "Hello World\r");
+    // let _ = writeln!(tx, "Entering echo mode..\r");
     let mut led_state: bool = true;
     loop {
         // Echo what is received on the serial link.
-        while let Ok(c) = rx.read() {
-            tx.write(c).unwrap();
-        }
+        // while let Ok(c) = rx.read() {
+        //     let _ = tx.write(c);
+        // }
 
         // Toggle the LED and wait until the next cycle
         led_state = !led_state;
         led.set_state(led_state.into());
-        block!(timer.wait()).unwrap();
+        let _ = block!(timer.wait());
     }
 }
